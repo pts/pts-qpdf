@@ -1,0 +1,25 @@
+--- libqpdf/QPDF.cc.orig	2017-08-17 20:19:53.349951475 +0200
++++ libqpdf/QPDF.cc	2017-08-17 20:19:59.382068204 +0200
+@@ -1392,21 +1392,21 @@
+     return object;
+ }
+ 
+ bool
+ QPDF::findEndstream()
+ {
+     // Find endstream or endobj. Position the input at that token.
+     QPDFTokenizer::Token t = readToken(this->file, true);
+     if ((t.getType() == QPDFTokenizer::tt_word) &&
+         ((t.getValue() == "endobj") ||
+-         (t.getValue() == "endstream")));
++         (t.getValue() == "endstream")))
+     {
+         this->file->seek(this->file->getLastOffset(), SEEK_SET);
+         return true;
+     }
+     return false;
+ }
+ 
+ size_t
+ QPDF::recoverStreamLength(PointerHolder<InputSource> input,
+ 			  int objid, int generation,
