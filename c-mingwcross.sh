@@ -4,6 +4,9 @@
 # Needs qpdf >= 9a96e233b051b31289c84f90a321583887b1400a
 # Tested with qpdf 201b62fc68398b37decbe0fde24dc94486db244e
 #
+# TODO(pts): Why is qpdf.exe larger than qpdf.xstatic? Both of them
+# libstdc++ linked statically.
+#
 
 set -ex
 
@@ -11,12 +14,9 @@ set -ex
 # The image ID is also a digest, and is a computed SHA256 hash of the image configuration object, which contains the digests of the layers that contribute to the image's filesystem definition.
 # REPOSITORY             TAG                 DIGEST                                                                    IMAGE ID            CREATED             SIZE
 # multiarch/crossbuild   latest              sha256:84a53371f554a3b3d321c9d1dfd485b8748ad6f378ab1ebed603fe1ff01f7b4d   846ea4d99d1a        5 months ago        2.99 GB
-  CCC="docker run -v $PWD:/workdir multiarch/crossbuild /usr/osxcross/bin/o32-clang -mmacosx-version-min=10.5 -c"
- CXXC="docker run -v $PWD:/workdir multiarch/crossbuild /usr/osxcross/bin/o32-clang++ -mmacosx-version-min=10.5 -c"
- CCLD="docker run -v $PWD:/workdir multiarch/crossbuild /usr/osxcross/bin/o32-clang -mmacosx-version-min=10.5 -Ldarwin_libgcc/i386-apple-darwin10/4.9.4 -lSystem -lgcc -lcrt1.10.5.o -nostdlib"
-STRIP="docker run -v $PWD:/workdir multiarch/crossbuild /usr/osxcross/bin/i386-apple-darwin14-strip"
-test -f darwin_libgcc/i386-apple-darwin10/4.9.4/libgcc.a
-# No -static-libstdc++ for Darwin. libstdc++.a doesn't even exist.
+  CCC="docker run -v $PWD:/workdir multiarch/crossbuild i686-w64-mingw32-gcc -c"
+ CXXC="docker run -v $PWD:/workdir multiarch/crossbuild i686-w64-mingw32-g++ -c"
+ CCLD="docker run -v $PWD:/workdir multiarch/crossbuild i686-w64-mingw32-g++ -static-libstdc++ -static-libgcc"
 
 rm -f *.o
 rm -rf src
@@ -35,11 +35,11 @@ $CCC -O2 -W -Wall -ansi -Izlib_src \
     zlib_src/zall.c
 # We can't do -fno-exceptions, because qpdf uses exceptions.
 # We can't do -fno-rtti, because qpdf uses dynamic_cast.
-# We do -lgcc_eh for the symbol __Unwind_Resume.
-# We don't do -Wold-style-cast, because libqpdf/sph/sph_types.h triggers it.
-$CCLD -O2 -Isrc/include -Isrc/libqpdf -Izlib_src -ansi \
+# We can't use -ansi, because ::swprintf is missing there.
+# We can't use -Wold-stlye-cast, there is (HANDLE)... etc.
+$CCLD -s -O2 -Isrc/include -Isrc/libqpdf -Izlib_src \
     -W -Wall -Wno-unused-parameter \
-    -ffunction-sections -fdata-sections -Wl,-dead_strip \
+    -ffunction-sections -fdata-sections -Wl,--gc-sections \
     src/libqpdf/BitStream.cc src/libqpdf/BitWriter.cc \
     src/libqpdf/Buffer.cc src/libqpdf/BufferInputSource.cc \
     src/libqpdf/FileInputSource.cc src/libqpdf/InputSource.cc \
@@ -68,12 +68,8 @@ $CCLD -O2 -Isrc/include -Isrc/libqpdf -Izlib_src -ansi \
     src/libqpdf/RC4.cc src/libqpdf/SecureRandomDataProvider.cc \
     src/libqpdf/qpdf-c.cc src/libqpdf/rijndael.cc src/qpdf/qpdf.cc \
     sha2.o sha2big.o zall.o \
-    -lstdc++ -lgcc_eh \
-    -o qpdf.darwinc32
-# Are these warnings relevant? Specifying -mdynamic-no-pic doesn't make them go away.
-# ld: warning: could not create compact unwind for __Unwind_RaiseException: non-standard register 0 being saved in prolog
-$STRIP qpdf.darwinc32
+    -o qpdf.exe
 rm -f *.o
-ls -l qpdf.darwinc32
+ls -l qpdf.exe
 
 : OK.

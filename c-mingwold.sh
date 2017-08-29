@@ -4,7 +4,7 @@
 # Needs qpdf >= 9a96e233b051b31289c84f90a321583887b1400a
 # Tested with qpdf 201b62fc68398b37decbe0fde24dc94486db244e
 #
-# TODO(pts): Why is qpdf.exe much larger than qpdf.darwinc32 and
+# TODO(pts): Why is qpdfold.exe much larger than qpdf.darwinc32 and
 # qpdf.xstatic? Probably because of the older gcc in i586-mingw32msvc-gcc?
 #
 
@@ -60,8 +60,8 @@ i586-mingw32msvc-g++ -s -O2 -Isrc/include -Isrc/libqpdf -Izlib_src \
     src/libqpdf/RC4.cc src/libqpdf/SecureRandomDataProvider.cc \
     src/libqpdf/qpdf-c.cc src/libqpdf/rijndael.cc src/qpdf/qpdf.cc \
     sha2.o sha2big.o zall.o \
-    -o qpdf.exe
+    -o qpdfold.exe
 rm -f *.o
-ls -l qpdf.exe
+ls -l qpdfold.exe
 
 : OK.
